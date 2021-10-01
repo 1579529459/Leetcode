@@ -1,0 +1,20 @@
+char* addStrings(char* num1, char* num2) {
+    int i = strlen(num1) - 1, j = strlen(num2) - 1, add = 0;
+    char* ans = (char*)malloc(sizeof(char) * (fmax(i, j) + 3));
+    int len = 0;
+    while (i >= 0 || j >= 0 || add != 0) {//妙阿！！！省去多余的while归并 和 x不为0 的进位   beautiful;
+        int x = i >= 0 ? num1[i] - '0' : 0;//妙阿这里 i，or j <0 了 则代表加完了，用0顶上去  +0 = 没加！！（--补零处理）
+        int y = j >= 0 ? num2[j] - '0' : 0;
+        int result = x + y + add;
+        ans[len++] = '0' + result % 10;
+        add = result / 10;
+        i--, j--;
+    }
+    // 计算完以后的答案需要翻转过来 (题解直接从后(低位)往前算了，只不过存入ans的是地位到高位，最后翻一下就好，就不用先翻一下，再翻回来了  nb666 我好傻)   翻<->Reverse
+    for (int i = 0; i < len/2; i++) {
+        int t = ans[i];
+        ans[i] = ans[len - i - 1], ans[len - i - 1] = t;
+    }
+    ans[len++] = 0;//补‘\n’
+    return ans;
+}
