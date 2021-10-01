@@ -1,0 +1,114 @@
+char* Add(char* a, char* b)
+{
+    int lena = strlen(a), lenb = strlen(b);
+    int len = lena > lenb ? lena : lenb;
+    char* ans = (char*)malloc(sizeof(char) * (lena+lenb+1));//两数相乘 最多 i+j位，99*99（100），99*9（10）可以带入验证，i+j+1（'\0'）位就好
+    int i = lena - 1, j = lenb - 1, x = 0, index = 0;
+    while (i >= 0 || j >= 0 || x != 0)
+    {
+        int a1 = i >= 0 ? a[i--] - '0' : 0;
+        int b1 = j >= 0 ? b[j--] - '0' : 0;
+        int sum = a1 + b1 + x;
+        ans[index++] = sum % 10  + '0';
+        x = sum / 10;
+    }
+    int left = 0, right = index - 1;
+    while (left < right)
+    {
+        char tmp2 = ans[left];
+        ans[left] = ans[right];
+        ans[right] = tmp2;
+        left++;
+        right--;
+    }
+    //别忘记补零!
+    ans[index++] = '\0';
+    return ans;
+}
+
+
+43. 字符串相乘
+给定两个以字符串形式表示的非负整数 num1 和 num2，返回 num1 和 num2 的乘积，它们的乘积也表示为字符串形式。
+
+示例 1:
+
+输入: num1 = "2", num2 = "3"
+输出: "6"
+示例 2:
+
+输入: num1 = "123", num2 = "456"
+输出: "56088"
+说明：
+
+num1 和 num2 的长度小于110。
+num1 和 num2 只包含数字 0-9。
+num1 和 num2 均不以零开头，除非是数字 0 本身。
+不能使用任何标准库的大数类型（比如 BigInteger）或直接将输入转换为整数来处理。
+通过次数170,962提交次数380,816
+
+
+
+======================================================================================================================================================================================
+
+====================================================================================================================================================================================================================================
+
+
+
+
+//模拟列竖式 运算  需要用到高精度加法！
+char* multiply(char* num1, char* num2) {
+    char* ans = malloc(sizeof(char) * 2);
+    ans[0] = '0';
+    ans[1] = 0;
+    int len1 = strlen(num1), len2 = strlen(num2);
+    
+    if((len1==1&&num1[0]=='0')||(len2==1&&num2[0]=='0')) return ans;
+    
+    
+   
+    for (int i = len2 - 1; i >= 0; i--)
+    {   char* tmp = malloc(sizeof(char) * (len1 +len2 + 1));//两数相乘 最多 i+j位，99*99（100），99*9（10）可以带入验证，i+j+1（'\0'）位就好
+        int index = 0;
+        int carry = 0;//模拟进位
+        //巧妙补0
+        for (int j = len2 - 1; j > i; j--)
+        {
+            tmp[index++] = '0';
+        }
+        //开乘    
+        int flag = num2[i] - '0';
+        for (int k = len1 - 1; k >= 0; k--)
+        {
+            int sum = 0;
+            sum = (num1[k] - '0') *flag + carry;//num2[i]就是低i位乘数准被一次乘被乘数每一位的那个数 
+            tmp[index++] = sum % 10 + '0';
+            carry = sum / 10;
+        }
+
+        if (carry != 0)//极端进位
+        {
+            tmp[index++] = carry+'0';
+            carry /= 10;
+        }//走到这里代表竖式一行计算完毕，下来需要反转，累加记录
+        //反转
+        int left = 0;
+        int right = index - 1;
+        while (left < right)
+        {
+            char tmp2 = tmp[left];
+            tmp[left] = tmp[right];
+            tmp[right] = tmp2;
+            left++;
+            right--;
+        }
+        tmp[index++] = '\0';//别忘了字符串结束
+        //防止内存泄漏的操作，仔细拼  beautiful;
+         char *tmp2 = Add(ans, tmp);
+        free(ans);
+        free(tmp);
+        ans = tmp2;//改变了ans指向 即便ans只有2字节 但是 我从新指向tmp2 我就是tmp2  那两个字节的内存泄露 不要了=-=
+    }
+    
+    return ans;
+
+}
