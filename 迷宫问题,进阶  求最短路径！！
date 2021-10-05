@@ -1,0 +1,260 @@
+//思路！！ 在简单迷宫(只有一条通路 找到了就可以一路返回)的基础上   去掉找到了返回 而是回溯复原标记 接着换方向看是否继续找， 每次到终点 若满足路径比上次小 就深度拷贝（两个栈 一个minans和临时ans的深度拷贝） 再回溯找
+                                                                        //，直到找完所有能走的路 ;//宏观控制代码，别想一句写一句，算法想清晰！//别忘了p（体力值》=0）才能继续向下找
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<stdbool.h>
+#include <assert.h>
+//顶一个 迷宫 当前位置的坐标！(x,y)
+typedef struct pos//精髓结构体
+{
+    int x;
+    int y;
+}pos;
+
+typedef pos STDataType;//栈的data为pos坐标结构体
+typedef struct Stack
+{
+    STDataType* a;
+    int top;		// 栈顶
+    int capacity;  // 容量 
+}Stack;
+
+Stack ans;//找到通路 回溯递归返回的时候 用个栈记下来，再输出 则就是0，0到终点的所有坐标;
+//放全局好操作!
+Stack tmpans;
+
+
+void ChickStack(Stack* ps)
+{
+    if (ps->capacity == ps->top)
+    {
+        Stack* tmp = (STDataType*)realloc(ps->a, ps->capacity * 2 * sizeof(STDataType));
+        assert(tmp);
+        ps->a = tmp;
+        ps->capacity *= 2;
+    }
+}
+
+void StackInit(Stack* ps)
+{
+    ps->a = (STDataType*)malloc(sizeof(STDataType) * 4);
+    ps->capacity = 4;
+    ps->top = 0;
+}
+
+// 入栈 
+void StackPush(Stack* ps, STDataType data)
+{
+    assert(ps);
+    ChickStack(ps);
+    ps->a[ps->top] = data;
+    ps->top++;
+}
+// 支持动态增长的栈
+
+// 出栈 
+void StackPop(Stack* ps)
+{
+    assert(ps);
+    if (ps->top > 0) ps->top--;
+
+}
+
+// 获取栈顶元素 
+STDataType StackTop(Stack* ps)
+{
+    assert(ps);
+    assert(ps->top > 0);
+    return ps->a[ps->top - 1];
+
+}
+int StackSize(Stack* ps)
+{
+    assert(ps);
+    return ps->top;
+}
+int StackEmpty(Stack* ps)//1 真 0 假
+{
+    assert(ps);
+    return ps->top == 0;
+}
+
+void StackDestroy(Stack* ps)
+{
+    assert(ps);
+    ps->top = 0;
+    free(ps->a);
+    ps->a = NULL;
+    ps->capacity = 0;
+}
+
+
+
+bool Ispass(int** maze, int m, int n, int p, pos next)//判断next这个位置 能不能走！0能，1（墙）or 2（走过的位置）不能
+{
+    if (next.x >= 0 && next.x < m
+        && next.y >= 0 && next.y < n  //还得满足 x，y横纵坐标不能越界啊，maze是个二维数组，注意边界
+        && maze[next.x][next.y] == 1
+        &&p>=0) //不光满足该位置0没走过也不是墙
+        return true;
+    return false;
+}
+
+void Anscpy(Stack* a, Stack* b)
+{
+    //b往a倒
+    a->a = (STDataType*)malloc(sizeof(STDataType) * b->capacity);
+    memcpy(a->a, b->a, sizeof(STDataType) * b->top);
+    a->capacity = b->capacity;
+    a->top = b->top;
+}
+//这个cur 不管是往下递归还是网上回溯都起到核心作用
+void Find(int** maze, int m, int n, int p, pos cur)//回溯递归的 函数！！ (默认上下左右回溯)
+{                                      //像 图的遍历查找！像二叉树左右子树递归！像思路递归！
+    //临时记录下一位置 成了往下递归 不成 就四个方向换方向 继续找路！cur到时候确认了要压栈，不能变呀！
+    //注意！！！！pos要选上下左右走，所以是cur的拷贝 成了就是下一递归的cur 不成就继续next = cur 再继续！
+    maze[cur.x][cur.y] = 2;
+
+    StackPush(&ans, cur);//先押入 不得行最后false之前再弹出
+
+   //既然递归 那就得有结束条件啊！！ 找到了(直接层层沿轨迹弹出并记录) or  （false，换四路递归的其他路）.
+   //规定出口右下角那个点。
+    if (cur.x == 0 && cur.y == n - 1) //如果这个if里成立 就是到了终点，则路线的Find递归也会依次全部返回true
+    {
+        //终点
+        if (p >= 0 && StackEmpty(&tmpans)
+            || StackSize(&ans) < StackSize(&tmpans))
+        {
+            Anscpy(&tmpans, &ans);//要深度拷贝 ans倒入tmpans
+
+        }
+
+
+    }
+
+
+    //上
+    pos next = cur;
+    next.x--;
+    if (Ispass(maze, m, n, p, next))
+    {
+        //next可以往下走 标记 再 递归下去!
+        Find(maze, m, n, p, next);
+
+
+
+    }
+
+    //上不行 就 下
+    next = cur;
+    next.x++;
+    if (Ispass(maze, m, n, p - 3, next))
+    {
+        //next可以往下走 标记 再 递归下去!
+        Find(maze, m, n, p - 3, next);
+        ;
+
+    }
+    //下不行 就 左
+    next = cur;
+    next.y--;
+    if (Ispass(maze, m, n, p - 1, next))
+    {
+        //next可以往下走 标记 再 递归下去!
+        Find(maze, m, n, p - 1, next);
+
+
+    }
+
+    //左不行 就 右
+    next = cur;
+    next.y++;
+    if (Ispass(maze, m, n, p - 1, next))
+    {
+        //next可以往下走 标记 再 递归下去!
+
+        Find(maze, m, n, p - 1, next);
+
+        maze[cur.x][cur.y] = 1;         //恢复现场，设为未走!寻找最优解
+    }
+
+    //呜呜呜上下左右思路递归都没有找到目标，就false 换上层的下或左或右，知道第一层find的哲理，那就找不到啦
+
+    StackPop(&ans);
+    maze[cur.x][cur.y] = 1;         //恢复现场，设为未走!寻找最优解
+
+}
+
+
+
+void Print(Stack* ans)//格式化倒输出答案
+{
+    Stack tmp;
+    StackInit(&tmp);
+    while (!StackEmpty(ans))
+    {
+        StackPush(&tmp, StackTop(ans));
+        StackPop(ans);
+    }
+    while (StackSize(&tmp) > 1)
+    {
+        pos x = StackTop(&tmp);
+        printf("[%d,%d],", x.x, x.y);
+        StackPop(&tmp);
+    }
+    printf("[%d,%d]\n", tmp.a[0].x, tmp.a[0].y);//last one 格式不一样
+    StackPop(&tmp);
+    StackDestroy(&tmp);
+
+}
+
+int main()
+{
+    //核心思路 体力值p先不管  求出所有路径 满足体力没完的!且!路径短的，更新ans就好！
+    int m, n, p;//m 行n 列
+
+
+    while (scanf("%d %d %d", &m, &n, &p) != EOF)
+    {
+        StackInit(&ans);
+        StackInit(&tmpans);
+        //创建迷宫:二维数组
+        int** maze = (int**)malloc(sizeof(int*) * m * n);
+        for (int i = 0; i < m; i++)
+        {
+            maze[i] = (int*)malloc(sizeof(int) * n);
+        }
+        //将数据scanf入迷宫
+        for (int i = 0; i < m; i++)
+        {
+            for (int j = 0; j < n; j++)
+            {
+                scanf("%d", &maze[i][j]);
+            }
+        }
+
+        pos cur = { 0,0 };//处时传入cur 当然是 起点 (0,0) //注意！！！！
+
+
+        Find(maze, m, n, p, cur);
+
+        if (!StackEmpty(&tmpans))
+        {
+            Print(&tmpans);
+        }
+        else
+        {
+            printf("Can not escape!\n");
+        }
+
+        //Find(maze,m,n,cur);//回溯迷宫过程；
+        //free掉当前迷宫!
+        for (int i = 0; i < m; i++)
+        {
+            free(maze[i]);
+        }
+        free(maze);
+    }
+    return 0;
+}
