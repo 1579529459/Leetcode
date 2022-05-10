@@ -1,0 +1,77 @@
+#include<iostream>
+#include<cstdio>
+#include<vector>
+#include<time.h>
+using namespace std;
+
+//分治法 类似于快排归并的递归分治O(nlogn)//分治法 类似于快排归并的递归分治O(nlogn)//分治法 类似于快排归并的递归分治O(nlogn)//分治法 类似于快排归并的递归分治O(nlogn)
+int Maxsub2(vector<int>& arr,int left,int right)
+{
+	if (left == right)
+	{
+		return arr[left] > 0 ? arr[left]:0;
+	}
+	int mid = left+right >> 1;
+	int lsum = Maxsub2(arr,left,mid);
+	int rsum = Maxsub2(arr, mid+1, right);
+
+	int sum = 0;
+	int lmax = 0;
+	//算出mid到left 的 maxsub 和 mid+1到right的maxsub 整合; “从中间向两头算”
+	for (int i = mid; i >= left; i--)
+	{
+		sum += arr[i];
+		if (sum > lmax) lmax = sum;
+	}
+	sum = 0;
+	int rmax = 0;
+	for (int i = mid + 1; i <= right; i++)
+	{
+		sum += arr[i];
+		if (sum > rmax) rmax = sum;
+	}
+	sum = lmax + rmax;
+
+	if (sum < lsum) sum = lsum;
+	if (sum < rsum) sum = rsum;
+	return sum;
+}
+
+int Max(int a, int b)
+{
+	return a > b ? a : b;
+}
+
+//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划//DP动态规划
+int Maxsub3(vector<int>& arr,int len)
+{
+	//状态数组;//dp[i]表示以i为子段尾部下标的最大子段和值。
+	//即dp[i] = max(dp[i - 1] + a[i], a[i]);
+	int dp[100] = {0};
+	dp[0] = arr[0];
+	int max = 0;
+
+	
+	for (int i = 1; i < len; i++)
+	{
+		dp[i] = Max(dp[i - 1] + arr[i], arr[i]);
+	}
+
+	for (int i = 0; i < len; i++)
+	{
+		if (max < dp[i]) max = dp[i];
+	}
+	
+	return max;
+}
+
+
+int main()
+{
+	vector<int>arr = {-20,11,-4,13,-5,-22};
+
+	cout<<Maxsub2(arr,0,5)<<endl;
+
+
+	return 0;
+}
